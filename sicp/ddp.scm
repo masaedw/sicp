@@ -1,4 +1,4 @@
-(define-module SICP.DDP
+(define-module sicp.ddp
   (export-all))
 ;; Data-Directed Programming package
 ;; SICP(J) P.99
@@ -47,4 +47,4 @@
            "No method for these types -- APPLY-GENERIC"
            (list op type-tags))))))
 
-(provide "SICP/DDP")
+(provide "sicp/ddp")

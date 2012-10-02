@@ -1,5 +1,5 @@
 (add-load-path ".")
-(use SICP.DDP)
+(use sicp.ddp)
 
 ;; ジェネリック関数の定義
 (define (add x y) (apply-generic 'add x y))
