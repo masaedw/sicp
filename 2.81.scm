@@ -14,10 +14,18 @@
 
 (define (=zero? x) (apply-generic '=zero? x))
 
+(define (exp x y) (apply-generic 'exp x y))
+
 ;; 普通の数値パッケージ
 (define (install-scheme-number-package)
   (define (tag x)
     (attach-tag 'scheme-number x))
+
+  (define (scheme-number->complex n)
+    (make-complex-from-real-imag (contents n) 0))
+
+  (define (scheme-number->scheme-number n) n)
+
   (put-method 'add '(scheme-number scheme-number)
               (lambda (x y) (tag (+ x y))))
   (put-method 'sub '(scheme-number scheme-number)
@@ -32,6 +40,13 @@
               (lambda (x) (= x 0)))
   (put-method 'make 'scheme-number
               (lambda (x) (tag x)))
+
+  (put-method 'exp '(scheme-number scheme-number)
+              (lambda (x y) (tag (expt x y))))
+
+  (put-coercion 'scheme-number 'complex scheme-number->complex)
+  (put-coercion 'scheme-number 'scheme-number scheme-number->scheme-number)
+
   'done)
 
 (define (make-scheme-number n)
@@ -65,6 +80,9 @@
   (define (=zero?-rat x)
     (= (numer x) 0))
 
+  (define (rational->complex n)
+    (make-complex-from-real-imag (contents n) 0))
+
   ;; システムの他の部分へのインターフェース
   (define (tag x) (attach-tag 'rational x))
   (put-method 'add '(rational rational)
@@ -82,7 +100,11 @@
 
   (put-method 'make 'rational
               (lambda (n d) (tag (make-rat n d))))
+
+  (put-coercion 'rational 'complex rational->complex)
+
   'done)
+
 
 (define (make-rational n d)
   ((get-method 'make 'rational) n d))
@@ -175,6 +197,8 @@
   (define (=zero?-complex z)
     (and (= (real-part z) 0) (= (imag-part z) 0)))
 
+  (define (complex->complex z) z)
+
   ;; システムの他の部分へのインターフェース
   (define (tag z) (attach-tag 'complex z))
   (put-method 'add '(complex complex)
@@ -197,6 +221,7 @@
   (put-method 'imag-part '(complex) imag-part)
   (put-method 'magnitude '(complex) magnitude)
   (put-method 'angle '(complex) angle)
+  (put-coercion 'complex 'complex complex->complex)
   'done)
 
 (define (make-complex-from-real-imag x y)
@@ -212,8 +237,20 @@
 (install-complex-package)
 
 (define a (make-complex-from-real-imag 3 4))
+(define b (make-rational 5 4))
 
 (define (main args)
   (print a)
   (print (magnitude a))
+  (add (make-complex-from-real-imag 4 1) (make-complex-from-real-imag 5 1))
+  ;; 2.81 a.
+
+  ;; complexにはexpの定義がないが、apply-genericはcomplex->complexを呼
+  ;; び出した上で再度expを呼ぼうとするため、無限ループになる。
+  (exp (make-complex-from-real-imag 4 1) (make-complex-from-real-imag 5 1))
+
+  ;; 2.81 b.
+
+  ;; 同じ型の引数の強制型変換について何かすべきだというLouisの主張は正しくない。
+  ;; このままでapply-genericは正しく働く
   )
