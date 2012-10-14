@@ -34,14 +34,14 @@
               (lambda (x) (tag x)))
   'done)
 
-(define (make-scheme-nubmer n)
+(define (make-scheme-number n)
   ((get-method 'make 'scheme-number) n))
 
 ;; 有理数パッケージ
 (define (install-rational-package)
   ;; 内部手続き
   (define (numer x) (car x))
-  (define (denom x) (car x))
+  (define (denom x) (cdr x))
   (define (make-rat n d)
     (letrec ((g (gcd n d))
              (h (if (< d 0) (- g) g)))
