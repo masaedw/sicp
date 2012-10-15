@@ -59,24 +59,29 @@
 ;; は(scheme-number->crationalが存在するにもかかわらず)実行できない。
 ;; 与えられた引数を全て単一の型に強制変換しようとするからである。
 (define (apply-generic op . args)
-  (let ((type-tags (map type-tag args)))
-    (let ((proc (get-method op type-tags)))
+  (if (= 1 (length args))
+    (let ([proc (get-method op (type-tag (car args)))])
       (if proc
-        (apply proc (map contents args))
-        (if (and (<= 2 (length args))
-                 (not (every (cut eq? <> (car type-tags)) type-tags)))
-          (let loop ([type-tags-sub type-tags])
-            (if (null? type-tags-sub)
-              (error "No method for these types" (list op type-tags))
-              (let1 target-type (car type-tags-sub)
-                (let ([type-converters (map (^t (get-coercion t target-type)) type-tags)]
-                      [proc (get-method op (map (^x target-type) type-tags))])
-                  (if (and (every boolean type-converters)
-                           proc)
-                    (apply proc (map (^(x) ((car x) (cadr x))) (zip type-converters args)))
-                    (loop (cdr type-tags-sub)))))))
-          (error "No method for these types"
-            (list op type-tags)))))))
+        (proc (contents (car args)))
+        (error "No method for that type" (list op (type-tag (car args))))))
+    (let ((type-tags (map type-tag args)))
+      (let ((proc (get-method op type-tags)))
+        (if proc
+          (apply proc (map contents args))
+          (if (and (<= 2 (length args))
+                   (not (every (cut eq? <> (car type-tags)) type-tags)))
+            (let loop ([type-tags-sub type-tags])
+              (if (null? type-tags-sub)
+                (error "No method for these types" (list op type-tags))
+                (let1 target-type (car type-tags-sub)
+                  (let ([type-converters (map (^t (get-coercion t target-type)) type-tags)]
+                        [proc (get-method op (map (^x target-type) type-tags))])
+                    (if (and (every boolean type-converters)
+                             proc)
+                      (apply proc (map (^(x) ((car x) (cadr x))) (zip type-converters args)))
+                      (loop (cdr type-tags-sub)))))))
+            (error "No method for these types"
+              (list op type-tags))))))))
 
 ;; ジェネリック関数の定義
 (define (add x y) (apply-generic 'add x y))
