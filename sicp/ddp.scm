@@ -111,7 +111,7 @@
   (define (scheme-number->scheme-number n) n)
 
   (define (scheme-number->rational n)
-    (make-rational (contents n) 0))
+    (make-rational (contents n) 1))
 
   (put-method 'add '(scheme-number scheme-number)
               (lambda (x y) (tag (+ x y))))
