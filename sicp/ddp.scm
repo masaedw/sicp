@@ -78,7 +78,7 @@
                         [proc (get-method op (map (^x target-type) type-tags))])
                     (if (and (every boolean type-converters)
                              proc)
-                      (apply proc (map (^(x) ((car x) (cadr x))) (zip type-converters args)))
+                      (apply proc (map (^x (contents ((car x) (cadr x)))) (zip type-converters args)))
                       (loop (cdr type-tags-sub)))))))
             (error "No method for these types"
               (list op type-tags))))))))
