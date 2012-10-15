@@ -224,10 +224,10 @@
 
   ;; システムの他の部分とのインターフェース
   (define (tag x) (attach-tag 'rectangular x))
-  (put-method 'real-part '(rectangular) real-part)
-  (put-method 'imag-part '(rectangular) imag-part)
-  (put-method 'magnitude '(rectangular) magnitude)
-  (put-method 'angle '(rectangular) angle)
+  (put-method 'real-part 'rectangular real-part)
+  (put-method 'imag-part 'rectangular imag-part)
+  (put-method 'magnitude 'rectangular magnitude)
+  (put-method 'angle 'rectangular angle)
   (put-method 'make-from-real-imag 'rectangular
               (lambda (x y) (tag (make-from-real-imag x y))))
   (put-method 'make-from-mag-ang 'rectangular
@@ -250,10 +250,10 @@
 
   ;; システムの他の部分とのインターフェイス
   (define (tag x) (attach-tag 'polar x))
-  (put-method 'real-part '(polar) real-part)
-  (put-method 'imag-part '(polar) imag-part)
-  (put-method 'magnitude '(polar) magnitude)
-  (put-method 'angle '(polar) angle)
+  (put-method 'real-part 'polar real-part)
+  (put-method 'imag-part 'polar imag-part)
+  (put-method 'magnitude 'polar magnitude)
+  (put-method 'angle 'polar angle)
   (put-method 'make-from-real-imag 'polar
               (lambda (x y) (tag (make-from-real-imag x y))))
   (put-method 'make-from-mag-ang 'polar
