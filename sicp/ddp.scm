@@ -98,6 +98,8 @@
 
 (define (exp x y) (apply-generic 'exp x y))
 
+(define (raise x) (apply-generic 'raise x))
+
 ;; 普通の数値パッケージ
 (define (install-scheme-number-package)
   (define (tag x)
@@ -129,14 +131,18 @@
   (put-method 'exp '(scheme-number scheme-number)
               (lambda (x y) (tag (expt x y))))
 
+  (put-method 'raise 'scheme-number
+              (^x (make-rational (contents x) 1)))
+
   (put-coercion 'scheme-number 'complex scheme-number->complex)
-  (put-coercion 'scheme-number 'scheme-number scheme-number->scheme-number)
   (put-coercion 'scheme-number 'rational scheme-number->rational)
+  (put-coercion 'scheme-number 'scheme-number scheme-number->scheme-number)
 
   'done)
 
 (define (make-scheme-number n)
   ((get-method 'make 'scheme-number) n))
+
 
 ;; 有理数パッケージ
 (define (install-rational-package)
@@ -188,6 +194,9 @@
 
   (put-method 'make 'rational
               (lambda (n d) (tag (make-rat n d))))
+
+  (put-method 'raise 'rational
+              (^x (make-complex-from-real-imag (/ (numer x) (denom x)) 0)))
 
   (put-coercion 'rational 'complex rational->complex)
   (put-coercion 'rational 'rational rational->rational)
