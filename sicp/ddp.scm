@@ -46,18 +46,30 @@
         [else
          (error "Bad tagged datum -- CONTENTS" datum)]))
 
-;; 2.82 による
-;; すべての引数を第一引数の型、次に第二引数の型等々に強制変換を試みる実装
-;; これは十分に一般的ではない。
-;;
-;; 例:
-;; (put-method 'add '(complex rational scheme-number) ...)
-;; という3引数のメソッドが存在した場合、
-;; (apply-generic 'add (make-complex-from-real-imag 5 0) (make-rational 5 1) (make-scheme-number 5))
-;; は実行可能だが、
-;; (apply-generic 'add (make-complex-from-real-imag 5 0) (make-scheme-number 5) (make-scheme-number 5))
-;; は(scheme-number->crationalが存在するにもかかわらず)実行できない。
-;; 与えられた引数を全て単一の型に強制変換しようとするからである。
+;; 2.84 二つの型のいずれが塔の中で高いかをテストする方法
+(define (higher t1 t2)
+  (cond [(memq t2 (ancestors t1)) t2]
+        [(memq t1 (ancestors t2)) t1]
+        [else (error "Independent types" t1 t2)]))
+
+(define (ancestors type)
+  (let loop ([a ()]
+             [t type])
+    (let1 p (parent t)
+      (if (not p)
+        (reverse a)
+        (loop (cons p a) p)))))
+
+(define *parent-table* (make-hash-table 'equal?))
+
+(define (parent type)
+  (if (hash-table-exists? *parent-table* type)
+    (hash-table-get *parent-table* type)
+    #f))
+
+(define (inherit child parent)
+  (hash-table-put! *parent-table* child parent))
+
 (define (apply-generic op . args)
   (if (= 1 (length args))
     (let ([proc (get-method op (type-tag (car args)))])
@@ -134,6 +146,8 @@
   (put-method 'raise 'scheme-number
               (^x (make-rational (contents x) 1)))
 
+  (inherit 'scheme-number 'rational)
+
   (put-coercion 'scheme-number 'complex scheme-number->complex)
   (put-coercion 'scheme-number 'rational scheme-number->rational)
   (put-coercion 'scheme-number 'scheme-number scheme-number->scheme-number)
@@ -197,6 +211,8 @@
 
   (put-method 'raise 'rational
               (^x (make-complex-from-real-imag (/ (numer x) (denom x)) 0)))
+
+  (inherit 'rational 'complex)
 
   (put-coercion 'rational 'complex rational->complex)
   (put-coercion 'rational 'rational rational->rational)
