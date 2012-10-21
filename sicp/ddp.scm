@@ -364,6 +364,3 @@
 (install-rectangular-package)
 (install-polar-packge)
 (install-complex-package)
-
-
-(provide "sicp/ddp")
