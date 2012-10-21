@@ -105,7 +105,7 @@
                (if (not (all-same type-tags))
                  (let* ([highest-type (highest type-tags)]
                         [proc (get-method op (map (^x highest-type) type-tags))])
-                   (apply proc (map (^x (coerce-to highest-type x)) args)))
+                   (apply proc (map (^x (contents (coerce-to highest-type x))) args)))
                  (error "No method for these types"
                    (list op type-tags))))))]))
 
