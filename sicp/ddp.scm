@@ -77,6 +77,14 @@
 (define (inherit child parent)
   (hash-table-put! *parent-table* child parent))
 
+;; 可能な限り塔を押し下げる
+(define (drop x)
+  (or (and-let* ([proc (get-method 'project (type-tag x))]
+                 [projected (proc x)]
+                 [(equ? projected x)])
+        projected)
+      x))
+
 ;; 2.84 apply-generic を raise を用いて書き直したもの
 (define (apply-generic op . args)
   (define (highest types)
@@ -126,6 +134,9 @@
 (define (exp x y) (apply-generic 'exp x y))
 
 (define (raise x) (apply-generic 'raise x))
+
+(define (project x) (apply-generic 'project x))
+
 
 ;; 普通の数値パッケージ
 (define (install-scheme-number-package)
@@ -224,10 +235,19 @@
   (put-method 'make 'rational
               (lambda (n d) (tag (make-rat n d))))
 
+  (put-method 'numer 'rational
+              (^x (numer (contents x))))
+
+  (put-method 'denom 'rational
+              (^x (denom (contents x))))
+
   (put-method 'raise 'rational
               (^x (make-complex-from-real-imag (/ (numer x) (denom x)) 0)))
 
   (inherit 'rational 'complex)
+
+  (put-method 'project 'rational
+              (^x (make-scheme-number (round (/ (numer x) (denom x))))))
 
   (put-coercion 'rational 'complex rational->complex)
   (put-coercion 'rational 'rational rational->rational)
@@ -351,6 +371,7 @@
   (put-method 'magnitude 'complex magnitude)
   (put-method 'angle 'complex angle)
   (put-coercion 'complex 'complex complex->complex)
+  (put-method 'project 'complex (^x (make-rational (real-part x) 1)))
   'done)
 
 (define (make-complex-from-real-imag x y)
