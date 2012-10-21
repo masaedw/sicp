@@ -1,10 +1,12 @@
 (define-module sicp.ddp
-  (export-all))
-;; Data-Directed Programming package
-;; SICP(J) P.99
+  (use srfi-1)
+  (use gauche.sequence)
+  (export-all)
+  ;; Data-Directed Programming package
+  ;; SICP(J) P.99
+  )
 
-(use srfi-1)
-(use gauche.sequence)
+(select-module sicp.ddp)
 
 (define (square x) (* x x))
 
