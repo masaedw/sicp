@@ -52,8 +52,9 @@
 
 ;; 2.84 二つの型のいずれが塔の中で高いかをテストする方法
 (define (higher t1 t2)
-  (cond [(memq t2 (ancestors t1)) t2]
-        [(memq t1 (ancestors t2)) t1]
+  (cond [(eq? t1 t2) #f]
+        [(memq t2 (ancestors t1)) #t]
+        [(memq t1 (ancestors t2)) #f]
         [else (error "Independent types" t1 t2)]))
 
 (define (ancestors type)

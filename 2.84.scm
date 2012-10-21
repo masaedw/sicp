@@ -27,11 +27,11 @@
        (ancestors 'scheme-number))
 
 (test* "which is higher type of scheme-number and rational is rational"
-       'rational
+       #t
        (higher 'scheme-number 'rational))
 
 (test* "which is higher type of scheme-number and complex is complex"
-       'complex
+       #t
        (higher 'scheme-number 'complex))
 
 ;; 2.82 2.83 がいままで通りに動いていれば正しく実装ができているはず
