@@ -4,6 +4,7 @@
 ;; SICP(J) P.99
 
 (use srfi-1)
+(use gauche.sequence)
 
 (define (square x) (* x x))
 
@@ -39,6 +40,9 @@
         [else
          (error "Bad tagged datum -- TYPE-TAG" datum)]))
 
+(define (is-a? datum type)
+  (eq? (type-tag datum) type))
+
 (define (contents datum)
   (cond [(number? datum) datum]
         [(pair? datum)
@@ -70,30 +74,38 @@
 (define (inherit child parent)
   (hash-table-put! *parent-table* child parent))
 
+;; 2.84 apply-generic を raise を用いて書き直したもの
 (define (apply-generic op . args)
-  (if (= 1 (length args))
-    (let ([proc (get-method op (type-tag (car args)))])
-      (if proc
-        (proc (contents (car args)))
-        (error "No method for that type" (list op (type-tag (car args))))))
-    (let ((type-tags (map type-tag args)))
-      (let ((proc (get-method op type-tags)))
-        (if proc
-          (apply proc (map contents args))
-          (if (and (<= 2 (length args))
-                   (not (every (cut eq? <> (car type-tags)) type-tags)))
-            (let loop ([type-tags-sub type-tags])
-              (if (null? type-tags-sub)
-                (error "No method for these types" (list op type-tags))
-                (let1 target-type (car type-tags-sub)
-                  (let ([type-converters (map (^t (get-coercion t target-type)) type-tags)]
-                        [proc (get-method op (map (^x target-type) type-tags))])
-                    (if (and (every boolean type-converters)
-                             proc)
-                      (apply proc (map (^x (contents ((car x) (cadr x)))) (zip type-converters args)))
-                      (loop (cdr type-tags-sub)))))))
-            (error "No method for these types"
-              (list op type-tags))))))))
+  (define (highest types)
+    (find-max types :compare higher))
+
+  (define (coerce-to type n)
+    (if (is-a? n type)
+      n
+      (coerce-to type (raise n))))
+
+  (define (all-same xs)
+    (every (^x (eq? x (car xs))) xs))
+
+  (cond [(null? args)
+         (error "No given args")]
+        [(= 1 (length args))
+         (let ([proc (get-method op (type-tag (car args)))])
+           (if proc
+             (proc (contents (car args)))
+             (error "No method for that type" (list op (type-tag (car args))))))]
+        [(< 1 (length args))
+         (let ((type-tags (map type-tag args)))
+           (let ((proc (get-method op type-tags)))
+             (if proc
+               (apply proc (map contents args))
+               (if (not (all-same type-tags))
+                 (let* ([highest-type (highest type-tags)]
+                        [proc (get-method op (map (^x highest-type) type-tags))])
+                   (apply proc (map (^x (coerce-to highest-type x)) args)))
+                 (error "No method for these types"
+                   (list op type-tags))))))]))
+
 
 ;; ジェネリック関数の定義
 (define (add x y) (apply-generic 'add x y))
