@@ -466,6 +466,13 @@
                                 (mul (coeff t1) (coeff t2)))
                      (mul-term-by-all-terms t1 (rest-terms L))))))
 
+  (define (=zero?-polynomial p)
+    (let loop ([terms (term-list p)])
+      (if (empty-termlist? terms)
+        #t
+        (and (=zero? (coeff (first-term terms)))
+             (loop (rest-terms terms))))))
+
   ;; システムの他の部分とのインターフェース
   (define (tag p) (attach-tag 'polynomial p))
   (put-method 'add '(polynomial polynomial)
@@ -474,6 +481,7 @@
               (^ (p1 p2) (tag (mul-poly p1 p2))))
   (put-method 'make 'polynomial
               (^ (var terms) (tag (make-poly var terms))))
+  (put-method '=zero? 'polynomial =zero?-polynomial)
 
   'done)
 

@@ -26,3 +26,17 @@
             (make-polynomial 'x '((3 5) (0 1))))
        equal?) ;; equ? はこの段階では未定義
 
+;; ここまで、テキストの実装が正しく行えていることの確認
+
+(define (test-multiple name . xs)
+  (define (test-sub arg)
+    (test* name
+           (car arg)
+           (cadr arg)))
+  (map test-sub (slices xs 2)))
+
+(test-multiple "=zero?"
+               #t (=zero? (make-polynomial 'x '((5 0) (4 0) (3 0))))
+               #f (=zero? (make-polynomial 'x '((5 0) (4 1) (3 0))))
+               #t (=zero? (make-polynomial 'y `((5 0) (4 ,(make-polynomial 'x '((5 0) (4 0) (3 0)))))))
+               )
