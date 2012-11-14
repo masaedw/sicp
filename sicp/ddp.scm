@@ -328,6 +328,11 @@
   (define (make-from-mag-ang r a)
     ((get-method 'make-from-mag-ang 'polar) r a))
 
+  (define (normalize-angle a)
+    (cond [(< pi a) (normalize-angle (- a 2pi))]
+          [(< a (- pi)) (normalize-angle (+ a 2pi))]
+          [else a]))
+
   ;; 内部手続き
   (define (add-complex z1 z2)
     (make-from-real-imag (+ (real-part z1) (real-part z2))
@@ -337,10 +342,10 @@
                          (- (imag-part z1) (imag-part z2))))
   (define (mul-complex z1 z2)
     (make-from-mag-ang (* (magnitude z1) (magnitude z2))
-                       (+ (angle z1) (angle z1))))
+                       (normalize-angle (+ (angle z1) (angle z2)))))
   (define (add-complex z1 z2)
     (make-from-mag-ang (/ (magnitude z1) (magnitude z2))
-                       (- (angle z1) (angle z1))))
+                       (normalize-angle (- (angle z1) (angle z2)))))
   (define (equ?-complex z1 z2)
     (and (= (real-part z1) (real-part z2)) (= (imag-part z1) (imag-part z2))))
   (define (=zero?-complex z)
