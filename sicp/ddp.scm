@@ -458,6 +458,17 @@
                                  (add-terms (rest-terms l1)
                                             (rest-terms l2)))]))]))
 
+  (define (negate-poly p1)
+    (make-poly (variable p1)
+               (negate-terms (term-list p1))))
+
+  (define (negate-terms l1)
+    (if (empty-termlist? l1)
+      l1
+      (let ([t1 (first-term l1)])
+        (adjoin-term (make-term (order t1) (negate (coeff t1)))
+                     (negate-terms (rest-terms l1))))))
+
   (define (mul-poly p1 p2)
     (if (same-variable? (variable p1) (variable p2))
       (make-poly (variable p1)
@@ -491,6 +502,8 @@
   (define (tag p) (attach-tag 'polynomial p))
   (put-method 'add '(polynomial polynomial)
               (^ (p1 p2) (tag (add-poly p1 p2))))
+  (put-method 'negate 'polynomial
+              (^x (tag (negate-poly x))))
   (put-method 'mul '(polynomial polynomial)
               (^ (p1 p2) (tag (mul-poly p1 p2))))
   (put-method 'make 'polynomial

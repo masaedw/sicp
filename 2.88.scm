@@ -46,3 +46,12 @@
        (negate (make-complex-from-real-imag 1 0))
        almost-equ?-complex)
 
+(test* "negate of (make-polynomial 'x '((2 1) (1 5)))"
+       (make-polynomial 'x '((2 -1)  (1 -5)))
+       (negate (make-polynomial 'x '((2 1) (1 5))))
+       ) ;; equ? はこの段階では未定義
+
+(test* "negate of (make-polynomial 'x `((2 ,(make-rational 5 4)) (1 5)))"
+       (make-polynomial 'x `((2 ,(make-rational -5 4))  (1 -5)))
+       (negate (make-polynomial 'x `((2 ,(make-rational 5 4)) (1 5))))
+       ) ;; equ? はこの段階では未定義
