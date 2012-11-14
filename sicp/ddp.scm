@@ -458,6 +458,9 @@
                                  (add-terms (rest-terms l1)
                                             (rest-terms l2)))]))]))
 
+  (define (sub-poly p1 p2)
+    (add-poly p1 (negate-poly p2)))
+
   (define (negate-poly p1)
     (make-poly (variable p1)
                (negate-terms (term-list p1))))
@@ -502,6 +505,8 @@
   (define (tag p) (attach-tag 'polynomial p))
   (put-method 'add '(polynomial polynomial)
               (^ (p1 p2) (tag (add-poly p1 p2))))
+  (put-method 'sub '(polynomial polynomial)
+              (^ (p1 p2) (tag (sub-poly p1 p2))))
   (put-method 'negate 'polynomial
               (^x (tag (negate-poly x))))
   (put-method 'mul '(polynomial polynomial)
