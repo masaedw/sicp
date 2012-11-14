@@ -60,3 +60,9 @@
        (make-polynomial 'x '((2 -4) (1 3)))
        (sub (make-polynomial 'x '((2 1) (1 5))) (make-polynomial 'x '((2 5) (1 2))))
        ) ;; equ? はこの段階では未定義
+
+
+(test* "sub (make-polynomial 'x '((2 1) (1 5))) (make-polynomial 'x '((2 5) (1 2) (0 5)))"
+       (make-polynomial 'x '((2 -4) (1 3) (0 -5)))
+       (sub (make-polynomial 'x '((2 1) (1 5))) (make-polynomial 'x '((2 5) (1 2) (0 5))))
+       ) ;; equ? はこの段階では未定義
