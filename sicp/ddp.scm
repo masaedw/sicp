@@ -1,6 +1,7 @@
 (define-module sicp.ddp
   (use srfi-1)
   (use gauche.sequence)
+  (use math.const)
   (export-all)
   ;; Data-Directed Programming package
   ;; SICP(J) P.99
@@ -123,6 +124,8 @@
 
 (define (sub x y) (apply-generic 'sub x y))
 
+(define (negate x) (apply-generic 'negate x))
+
 (define (mul x y) (apply-generic 'mul x y))
 
 (define (div x y) (apply-generic 'div x y))
@@ -155,6 +158,8 @@
               (lambda (x y) (tag (+ x y))))
   (put-method 'sub '(scheme-number scheme-number)
               (lambda (x y) (tag (- x y))))
+  (put-method 'negate 'scheme-number
+              (^x (tag (- x))))
   (put-method 'mul '(scheme-number scheme-number)
               (lambda (x y) (tag (* x y))))
   (put-method 'div '(scheme-number scheme-number)
@@ -223,6 +228,8 @@
               (lambda (x y) (tag (add-rat x y))))
   (put-method 'sub '(rational rational)
               (lambda (x y) (tag (sub-rat x y))))
+  (put-method 'negate 'rational
+              (^x (tag (mul-rat (make-rat -1 1) x))))
   (put-method 'mul '(rational rational)
               (lambda (x y) (tag (mul-rat x y))))
   (put-method 'div '(rational rational)
@@ -359,6 +366,8 @@
               (lambda (z1 z2) (tag (add-complex z1 z2))))
   (put-method 'sub '(complex complex)
               (lambda (z1 z2) (tag (sub-complex z1 z2))))
+  (put-method 'negate 'complex
+              (^x (tag (mul-complex x (make-complex-from-real-imag -1 0)))))
   (put-method 'mul '(complex complex)
               (lambda (z1 z2) (tag (mul-complex z1 z2))))
   (put-method 'div '(complex complex)
