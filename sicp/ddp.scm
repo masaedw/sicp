@@ -404,6 +404,77 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 多項式パッケージ
 
+(define (variable? x) (symbol? x))
+
+(define (same-variable? v1 v2)
+  (and (variable? v1) (variable? v2) (eq? v1 v2)))
+
+(define (variable p) (apply-generic 'variable p))
+(define (first-term p) (apply-generic 'first-term p))
+(define (rest-terms p) (apply-generic 'rest-terms p))
+(define (adjoin-term term p) (apply-generic 'adjoin-term term p))
+(define (order p) (apply-generic 'order p))
+(define (coeff p) (apply-generic 'coeff p))
+
+(define (install-term-package)
+  (define (tag x) (attach-tag 'term x))
+  (put-method 'make 'term
+              (^ (order coeff) (tag (list order coeff))))
+  (put-method 'order 'term
+              (^x (car x)))
+  (put-method 'coeff 'term
+              (^x (cadr x)))
+  )
+
+(install-term-package)
+
+(define (make-term order coeff)
+  ((get-method 'make 'term) order coeff))
+(define (order-as-term term)
+  (order (attach-tag 'term term)))
+(define (coeff-as-term term)
+  (coeff (attach-tag 'term term)))
+
+(define (install-polynomial-sparse-package)
+  (define (normalize-term-list term-list)
+    (reverse (sort-by term-list car)))
+
+  (define (make-poly variable term-list)
+    (cons variable (normalize-term-list term-list)))
+  (define (variable p) (car p))
+  (define (term-list p) (cdr p))
+
+  (define (the-empty-term-list) ())
+  (define (empty-termlist? term-list) (null? term-list))
+
+  (define (adjoin-term term p)
+    (if (=zero? (coeff-as-term term))
+      p
+      (make-poly (variable p) (cons term (term-list p)))))
+
+  (define (first-term p) (car (term-list p)))
+  (define (rest-terms p) (make-poly (variable p) (cdr (term-list p))))
+
+  ;; システムの他の部分とのインターフェース
+  (define (tag x) (attach-tag 'sparse x))
+  (put-method 'variable    'sparse
+              variable)
+  (put-method 'first-term  'sparse
+              first-term)
+  (put-method 'rest-terms  'sparse
+              (^x (tag (rest-terms x))))
+  (put-method 'adjoin-term '(term sparse)
+              (^(term p) (tag (adjoin-term term p))))
+  (put-method 'make        'sparse
+              (^ (variable term-list) (tag (make-poly variable term-list))))
+  )
+
+(install-polynomial-sparse-package)
+
+(define (make-from-term-list var terms)
+  ((get-method 'make 'sparse) var terms))
+
+
 (define (install-polynomial-package)
   ;; 内部手続き
   ;; 多項式型の表現
