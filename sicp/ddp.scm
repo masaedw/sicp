@@ -79,7 +79,7 @@
   (hash-table-put! *parent-table* child parent))
 
 ;; 可能な限り塔を押し下げる
-(define (drop x)
+(define (drop-tower x)
   (or (and-let* ([proc (get-method 'project (type-tag x))]
                  [projected (proc x)]
                  [(equ? projected x)])

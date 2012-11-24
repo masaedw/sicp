@@ -2,6 +2,9 @@
 (use sicp.ddp)
 (use gauche.test)
 
+;; 2.84 がいままで通りに動いていれば正しく実装ができているはず
+(load "2.84")
+
 (test-start "2.85")
 
 ;; 問
@@ -15,7 +18,7 @@
 ;;
 ;; 2. ヒントの通り可能な限り塔を下るdrop手続を書く。
 ;;    dropされたものは元の値と数値的に等しい。
-;; 
+;;
 ;; 3. apply-generic を drop を使うように修正する
 ;;    → これは……やらない方がいいのでは？
 ;;       apply-generic は generic procedure を組み立てる仕組みであって、
@@ -39,8 +42,5 @@
 
 (test* "drop of 5+0i is scheme-number 5"
        5
-       (drop (make-complex-from-real-imag 5 0))
+       (drop-tower (make-complex-from-real-imag 5 0))
        equ?)
-
-;; 2.84 がいままで通りに動いていれば正しく実装ができているはず
-(load "2.84")
