@@ -410,76 +410,91 @@
   (and (variable? v1) (variable? v2) (eq? v1 v2)))
 
 (define (variable p) (apply-generic 'variable p))
-(define (first-term p) (apply-generic 'first-term p))
-(define (rest-terms p) (apply-generic 'rest-terms p))
-(define (adjoin-term term p) (apply-generic 'adjoin-term term p))
-(define (order p) (apply-generic 'order p))
-(define (coeff p) (apply-generic 'coeff p))
-(define (the-empty-term-list-of type-tag)
-  ((get-method 'the-empty-term-list type-tag)))
-(define (empty-termlist? p) (apply-generic 'empty-termlist? p))
+(define (term-list p) (apply-generic 'term-list p))
+(define (coeff-list p) (apply-generic 'coeff-list p))
 
-(define (install-term-package)
-  (define (tag x) (attach-tag 'term x))
-  (put-method 'make 'term
-              (^ (order coeff) (tag (list order coeff))))
-  (put-method 'order 'term
-              (^x (car x)))
-  (put-method 'coeff 'term
-              (^x (cadr x)))
-  )
+(define (the-empty-term-list) ())
+(define (empty-termlist? term-list) (null? term-list))
 
-(install-term-package)
+(define (adjoin-term term term-list)
+  (if (=zero? (coeff term))
+    term-list
+    (cons term term-list)))
 
-(define (make-term order coeff)
-  ((get-method 'make 'term) order coeff))
-(define (order-as-term term)
-  (order (attach-tag 'term term)))
-(define (coeff-as-term term)
-  (coeff (attach-tag 'term term)))
+(define (first-term term-list) (car term-list))
+(define (rest-terms term-list) (cdr term-list))
+(define (make-term order coeff) (list order coeff))
+(define (order term) (car term))
+(define (coeff term) (cadr term))
+
+(define (normalize-term-list term-list)
+  (reverse (sort-by term-list car)))
+
+;; 薄い多項式パッケージ
 
 (define (install-polynomial-sparse-package)
-  (define (normalize-term-list term-list)
-    (reverse (sort-by term-list car)))
-
   (define (make-poly variable term-list)
     (cons variable (normalize-term-list term-list)))
   (define (variable p) (car p))
   (define (term-list p) (cdr p))
-
-  (define (the-empty-term-list) ())
-  (define (empty-termlist? term-list) (null? term-list))
-
-  (define (adjoin-term term p)
-    (if (=zero? (coeff-as-term term))
-      p
-      (make-poly (variable p) (cons term (term-list p)))))
-
-  (define (first-term p) (car (term-list p)))
-  (define (rest-terms p) (make-poly (variable p) (cdr (term-list p))))
+  (define (coeff-list p)
+    (let loop [(cs ())
+               (ts (reverse (term-list p)))
+               (i 0)]
+      (if (empty-termlist? ts)
+        cs
+        (if (= i (order (first-term ts)))
+          (loop (cons (coeff (first-term ts)) cs)
+                (rest-terms ts)
+                (+ i 1))
+          (loop (cons 0 cs)
+                ts
+                (+ i 1))))))
 
   ;; システムの他の部分とのインターフェース
   (define (tag x) (attach-tag 'sparse x))
-  (put-method 'variable    'sparse
-              variable)
-  (put-method 'first-term  'sparse
-              first-term)
-  (put-method 'rest-terms  'sparse
-              (^x (tag (rest-terms x))))
-  (put-method 'adjoin-term '(term sparse)
-              (^(term p) (tag (adjoin-term term p))))
-  (put-method 'the-empty-term-list 'sparse
-              the-empty-term-list)
-  (put-method 'empty-termlist? 'sparse
-              (^x (empty-termlist? (term-list x))))
-  (put-method 'make        'sparse
-              (^(variable term-list) (tag (make-poly variable term-list))))
+  (put-method 'variable   'sparse variable)
+  (put-method 'term-list  'sparse term-list)
+  (put-method 'coeff-list 'sparse coeff-list)
+  (put-method 'make       'sparse (.$ tag make-poly))
   )
 
 (install-polynomial-sparse-package)
 
 (define (make-from-term-list var terms)
   ((get-method 'make 'sparse) var terms))
+
+
+;; 濃い多項式パッケージ
+
+(define (install-polynomial-dense-package)
+  (define (make-poly variable coeff-list)
+    (cons variable coeff-list))
+
+  (define (variable p) (car p))
+  (define (term-list p)
+    (let loop [(ts (the-empty-term-list))
+               (cs (reverse (coeff-list p)))
+               (i 0)]
+      (if (null? cs)
+        ts
+        (loop (adjoin-term (make-term i (car cs)) ts)
+              (cdr cs)
+              (+ i 1)))))
+  (define (coeff-list p) (cdr p))
+
+  ;; システムの他の部分とのインターフェース
+  (define (tag x) (attach-tag 'dense x))
+  (put-method 'variable   'dense variable)
+  (put-method 'term-list  'dense term-list)
+  (put-method 'coeff-list 'dense coeff-list)
+  (put-method 'make       'dense (.$ tag make-poly))
+  )
+
+(install-polynomial-dense-package)
+
+(define (make-from-coeff-list var coeffs)
+  ((get-method 'make 'dense) var coeffs))
 
 
 (define (install-polynomial-package)
@@ -498,17 +513,6 @@
 
   (define (the-empty-term-list) ())
   (define (empty-termlist? term-list) (null? term-list))
-
-  (define (adjoin-term term term-list)
-    (if (=zero? (coeff term))
-      term-list
-      (cons term term-list)))
-
-  (define (first-term term-list) (car term-list))
-  (define (rest-terms term-list) (cdr term-list))
-  (define (make-term order coeff) (list order coeff))
-  (define (order term) (car term))
-  (define (coeff term) (cadr term))
 
   (define (add-poly p1 p2)
     (if (same-variable? (variable p1) (variable p2))
