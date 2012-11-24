@@ -415,6 +415,9 @@
 (define (adjoin-term term p) (apply-generic 'adjoin-term term p))
 (define (order p) (apply-generic 'order p))
 (define (coeff p) (apply-generic 'coeff p))
+(define (the-empty-term-list-of type-tag)
+  ((get-method 'the-empty-term-list type-tag)))
+(define (empty-termlist? p) (apply-generic 'empty-termlist? p))
 
 (define (install-term-package)
   (define (tag x) (attach-tag 'term x))
@@ -465,8 +468,12 @@
               (^x (tag (rest-terms x))))
   (put-method 'adjoin-term '(term sparse)
               (^(term p) (tag (adjoin-term term p))))
+  (put-method 'the-empty-term-list 'sparse
+              the-empty-term-list)
+  (put-method 'empty-termlist? 'sparse
+              (^x (empty-termlist? (term-list x))))
   (put-method 'make        'sparse
-              (^ (variable term-list) (tag (make-poly variable term-list))))
+              (^(variable term-list) (tag (make-poly variable term-list))))
   )
 
 (install-polynomial-sparse-package)

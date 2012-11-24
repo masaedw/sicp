@@ -36,3 +36,15 @@
        (make-from-term-list 'x '((3 1) (2 2) (0 4)))
        (adjoin-term (make-term 2 2) (make-from-term-list 'x '((3 1) (0 4))))
        )
+
+(test* "the-empty-term-list of sparse"
+       ()
+       (the-empty-term-list-of 'sparse))
+
+(test* "empty-term-list? (sparse x (3 1) (0 4))"
+       #f
+       (empty-termlist? (make-from-term-list 'x '((3 1) (0 4)))))
+
+(test* "empty-term-list? (sparse x ())"
+       #t
+       (empty-termlist? (make-from-term-list 'x '())))
