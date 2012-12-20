@@ -451,19 +451,36 @@
                 ts
                 (+ i 1))))))
 
+  (define (negate-sparse p1)
+    (make-poly (variable p1)
+               (negate-terms (term-list p1))))
+
+  (define (negate-terms l1)
+    (if (empty-termlist? l1)
+      l1
+      (let ([t1 (first-term l1)])
+        (adjoin-term (make-term (order t1) (negate (coeff t1)))
+                     (negate-terms (rest-terms l1))))))
+
+  (define (=zero?-sparse p)
+    (let loop ([terms (term-list p)])
+      (if (empty-termlist? terms)
+        #t
+        (and (=zero? (coeff (first-term terms)))
+             (loop (rest-terms terms))))))
+
   ;; システムの他の部分とのインターフェース
   (define (tag x) (attach-tag 'sparse x))
   (put-method 'variable   'sparse variable)
   (put-method 'term-list  'sparse term-list)
   (put-method 'coeff-list 'sparse coeff-list)
-  (put-method 'make       'sparse (.$ tag make-poly))
+  (put-method 'negate     'sparse (.$ tag negate-sparse))
+  (put-method '=zero?     'sparse =zero?-sparse)
+
+  (put-method 'make-from-term-list 'sparse (.$ tag make-poly))
   )
 
 (install-polynomial-sparse-package)
-
-(define (make-from-term-list var terms)
-  ((get-method 'make 'sparse) var terms))
-
 
 ;; 濃い多項式パッケージ
 
@@ -483,43 +500,77 @@
               (+ i 1)))))
   (define (coeff-list p) (cdr p))
 
+  (define (negate-dense p1)
+    (make-poly (variable p1)
+               (negate-coeffs (coeff-list p1))))
+
+  (define (negate-coeffs c1)
+    (if (null? c1)
+      c1
+      (map negate c1)))
+
+  (define (=zero?-dense p)
+    (let loop ([coeffs (coeff-list p)])
+      (if (null? coeffs)
+        #t
+        (and (=zero? (car coeffs))
+             (loop (cdr coeffs))))))
+
   ;; システムの他の部分とのインターフェース
   (define (tag x) (attach-tag 'dense x))
   (put-method 'variable   'dense variable)
   (put-method 'term-list  'dense term-list)
   (put-method 'coeff-list 'dense coeff-list)
-  (put-method 'make       'dense (.$ tag make-poly))
+  (put-method 'negate     'dense (.$ tag negate-dense))
+  (put-method '=zero?     'dense =zero?-dense)
+
+  (put-method 'make-from-coeff-list 'dense (.$ tag make-poly))
   )
 
 (install-polynomial-dense-package)
-
-(define (make-from-coeff-list var coeffs)
-  ((get-method 'make 'dense) var coeffs))
 
 
 (define (install-polynomial-package)
   ;; 内部手続き
   ;; 多項式型の表現
 
-  (define (make-poly variable term-list)
-    (cons variable term-list))
-  (define (variable p) (car p))
-  (define (term-list p) (cdr p))
+  (define (make-from-coeff-list var coeffs)
+    ((get-method 'make-from-coeff-list 'dense) var coeffs))
 
-  (define (variable? x) (symbol? x))
+  (define (make-from-term-list var terms)
+    ((get-method 'make-from-term-list 'sparse) var terms))
 
-  (define (same-variable? v1 v2)
-    (and (variable? v1) (variable? v2) (eq? v1 v2)))
-
-  (define (the-empty-term-list) ())
-  (define (empty-termlist? term-list) (null? term-list))
+  (define (sub-poly p1 p2)
+    (add-poly p1 (negate p2)))
 
   (define (add-poly p1 p2)
     (if (same-variable? (variable p1) (variable p2))
-      (make-poly (variable p1)
-                 (add-terms (term-list p1)
-                            (term-list p2)))
-      (error "polyqs not in same var -- add-poly"
+      (make-from-coeff-list (variable p1)
+                            (add-coeffs (coeff-list p1)
+                                        (coeff-list p2)))
+      (error "polys not in same var -- add-poly"
+        (list p1 p2))))
+
+  (define (add-coeffs c1 c2)
+    (let loop ([coeffs ()]
+               [c1 (reverse c1)]
+               [c2 (reverse c2)])
+      (if (and (null? c1) (null? c2))
+        coeffs
+        (loop (cons (cond [(null? c1) (car c2)]
+                          [(null? c2) (car c1)]
+                          [else (add (car c1) (car c2))])
+                    coeffs)
+              (drop* c1 1)
+              (drop* c2 1)))))
+
+
+  (define (mul-poly p1 p2)
+    (if (same-variable? (variable p1) (variable p2))
+      (make-from-term-list (variable p1)
+                           (mul-terms (term-list p1)
+                                      (term-list p2)))
+      (error "polys not in same var -- mul-poly"
         (list p1 p2))))
 
   (define (add-terms l1 l2)
@@ -540,28 +591,6 @@
                                  (add-terms (rest-terms l1)
                                             (rest-terms l2)))]))]))
 
-  (define (sub-poly p1 p2)
-    (add-poly p1 (negate-poly p2)))
-
-  (define (negate-poly p1)
-    (make-poly (variable p1)
-               (negate-terms (term-list p1))))
-
-  (define (negate-terms l1)
-    (if (empty-termlist? l1)
-      l1
-      (let ([t1 (first-term l1)])
-        (adjoin-term (make-term (order t1) (negate (coeff t1)))
-                     (negate-terms (rest-terms l1))))))
-
-  (define (mul-poly p1 p2)
-    (if (same-variable? (variable p1) (variable p2))
-      (make-poly (variable p1)
-                 (mul-terms (term-list p1)
-                            (term-list p2)))
-      (error "polys not in same var -- mul-poly"
-        (list p1 p2))))
-
   (define (mul-terms L1 L2)
     (if (empty-termlist? L1)
       (the-empty-term-list)
@@ -576,132 +605,39 @@
                                 (mul (coeff t1) (coeff t2)))
                      (mul-term-by-all-terms t1 (rest-terms L))))))
 
-  (define (=zero?-polynomial p)
-    (let loop ([terms (term-list p)])
-      (if (empty-termlist? terms)
-        #t
-        (and (=zero? (coeff (first-term terms)))
-             (loop (rest-terms terms))))))
+  (define (equ?-poly l1 l2)
+    (let loop ([t1 (term-list l1)]
+               [t2 (term-list l2)])
+      (cond [(and (empty-termlist? t1)
+                  (empty-termlist? t2))
+             #t]
+            [(and (= (order (first-term t1)) (order (first-term t2)))
+                  (equ? (coeff (first-term t1)) (coeff (first-term t2))))
+             (loop (rest-terms t1) (rest-terms t2))]
+            [else
+             #f])))
 
   ;; システムの他の部分とのインターフェース
   (define (tag p) (attach-tag 'polynomial p))
-  (put-method 'add '(polynomial polynomial)
-              (^ (p1 p2) (tag (add-poly p1 p2))))
-  (put-method 'sub '(polynomial polynomial)
-              (^ (p1 p2) (tag (sub-poly p1 p2))))
-  (put-method 'negate 'polynomial
-              (^x (tag (negate-poly x))))
-  (put-method 'mul '(polynomial polynomial)
-              (^ (p1 p2) (tag (mul-poly p1 p2))))
-  (put-method 'make 'polynomial
-              (^ (var terms) (tag (make-poly var terms))))
-  (put-method '=zero? 'polynomial =zero?-polynomial)
+  (put-method 'add  '(polynomial polynomial) (.$ tag add-poly))
+  (put-method 'sub  '(polynomial polynomial) (.$ tag sub-poly))
+  (put-method 'mul  '(polynomial polynomial) (.$ tag mul-poly))
+  (put-method 'equ? '(polynomial polynomial) equ?-poly)
 
+  (put-method 'negate 'polynomial (.$ tag negate))
+  (put-method '=zero? 'polynomial =zero?)
+
+  (put-method 'make-from-term-list  'polynomial (.$ tag make-from-term-list))
+  (put-method 'make-from-coeff-list 'polynomial (.$ tag make-from-coeff-list))
   'done)
 
 (install-polynomial-package)
 
-(define (make-polynomial var terms)
-  ((get-method 'make 'polynomial) var terms))
+(define (make-from-term-list var terms)
+  ((get-method 'make-from-term-list 'polynomial) var terms))
 
-;; 濃い多項式パッケージ
+(define (make-from-coeff-list var coeffs)
+  ((get-method 'make-from-coeff-list 'polynomial) var coeffs))
 
-(define (install-polynomial-dense-package)
-
-  (define (make-poly variable coeffs)
-    (cons variable coeffs))
-  (define (variable p) (car p))
-  (define (coeff-list p) (cdr p))
-
-  (define (variable? x) (symbol? x))
-
-  (define (same-variable? v1 v2)
-    (and (variable? v1) (variable? v2) (eq? v1 v2)))
-
-  (define (add-poly p1 p2)
-    (if (same-variable? (variable p1) (variable p2))
-      (make-poly (variable p1)
-                 (add-coeffs (coeff-list p1)
-                             (coeff-list p2)))
-      (error "polyqs not in same var -- add-poly"
-        (list p1 p2))))
-
-  (define (add-coeffs c1 c2)
-    (let loop ([coeffs ()]
-               [c1 (reverse c1)]
-               [c2 (reverse c2)])
-      (if (and (null? c1) (null? c2))
-        coeffs
-        (loop (cons (cond [(null? c1) (car c2)]
-                          [(null? c2) (car c1)]
-                          [else (add (car c1) (car c2))])
-                    coeffs)
-              (drop* c1 1)
-              (drop* c2 1)))))
-
-  (define (sub-poly p1 p2)
-    (add-poly p1 (negate-poly p2)))
-
-  (define (negate-poly p1)
-    (make-poly (variable p1)
-               (negate-coeffs (coeff-list p1))))
-
-  (define (negate-coeffs c1)
-    (if (null? c1)
-      c1
-      (map - c1)))
-
-  (define (mul-poly p1 p2)
-    (if (same-variable? (variable p1) (variable p2))
-      (make-poly (variable p1)
-                 (mul-coeffs (coeff-list p1)
-                             (coeff-list p2)))
-      (error "polys not in same var -- mul-poly"
-        (list p1 p2))))
-
-  ;;                    ax^2 +  bx +  c
-  ;; *                  dx^2 +  ex +  f
-  ;; -----------------------------------
-  ;;                   fax^2 + fbx + fc
-  ;; +         eax^3 + ebx^2 + ecx
-  ;; + dax^4 + dbx^3 + dcx^2
-
-  (define (shift-coeffs c)
-    (reverse (cons 0 (reverse c))))
-
-  (define (mul-coeffs c1 c2)
-    (define (sub r1)
-      (cond [(null? r1) ()]
-            [(null? c2) ()]
-            [else
-             (add-coeffs (shift-coeffs (mul-coeffs (cdr r1) c2))
-                         (map (^x (mul x (car r1))) c2))]))
-    (sub (reverse c1)))
-
-  (define (=zero?-polynomial p)
-    (let loop ([coeffs (coeff-list p)])
-      (if (null? coeffs)
-        #t
-        (and (=zero? (car coeffs))
-             (loop (cdr coeffs))))))
-
-  ;; システムの他の部分とのインターフェース
-  (define (tag p) (attach-tag 'polynomial-dense p))
-  (put-method 'add '(polynomial-dense polynomial-dense)
-              (^ (p1 p2) (tag (add-poly p1 p2))))
-  (put-method 'sub '(polynomial-dense polynomial-dense)
-              (^ (p1 p2) (tag (sub-poly p1 p2))))
-  (put-method 'negate 'polynomial-dense
-              (^x (tag (negate-poly x))))
-  (put-method 'mul '(polynomial-dense polynomial-dense)
-              (^ (p1 p2) (tag (mul-poly p1 p2))))
-  (put-method 'make 'polynomial-dense
-              (^ (var terms) (tag (make-poly var terms))))
-  (put-method '=zero? 'polynomial-dense =zero?-polynomial)
-
-  'done)
-
-(install-polynomial-dense-package)
-
-(define (make-polynomial-dense var coeffs)
-  ((get-method 'make 'polynomial-dense) var coeffs))
+;; 互換性のため
+(define make-polynomial make-from-term-list)

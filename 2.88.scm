@@ -49,20 +49,20 @@
 (test* "negate of (make-polynomial 'x '((2 1) (1 5)))"
        (make-polynomial 'x '((2 -1)  (1 -5)))
        (negate (make-polynomial 'x '((2 1) (1 5))))
-       ) ;; equ? はこの段階では未定義
+       equ?)
 
 (test* "negate of (make-polynomial 'x `((2 ,(make-rational 5 4)) (1 5)))"
        (make-polynomial 'x `((2 ,(make-rational -5 4))  (1 -5)))
        (negate (make-polynomial 'x `((2 ,(make-rational 5 4)) (1 5))))
-       ) ;; equ? はこの段階では未定義
+       equ?)
 
 (test* "sub (make-polynomial 'x '((2 1) (1 5))) (make-polynomial 'x '((2 5) (1 2)))"
        (make-polynomial 'x '((2 -4) (1 3)))
        (sub (make-polynomial 'x '((2 1) (1 5))) (make-polynomial 'x '((2 5) (1 2))))
-       ) ;; equ? はこの段階では未定義
+       equ?)
 
 
 (test* "sub (make-polynomial 'x '((2 1) (1 5))) (make-polynomial 'x '((2 5) (1 2) (0 5)))"
        (make-polynomial 'x '((2 -4) (1 3) (0 -5)))
        (sub (make-polynomial 'x '((2 1) (1 5))) (make-polynomial 'x '((2 5) (1 2) (0 5))))
-       ) ;; equ? はこの段階では未定義
+       equ?)

@@ -25,44 +25,87 @@
 
 ;; sparse type
 
+(define make-sparse (get-method 'make-from-term-list 'sparse))
+(define make-dense (get-method 'make-from-coeff-list 'dense))
+
 (test* "(make-from-term-list 'x '((5 2) (3 1) (0 4)))"
        '(sparse x (5 2) (3 1) (0 4))
-       (make-from-term-list 'x '((5 2) (3 1) (0 4)))
+       (make-sparse 'x '((5 2) (3 1) (0 4)))
        )
 
 (test* "variable of (sparse x (5 2) (3 1) (0 4))"
        'x
-       (variable (make-from-term-list 'x '((5 2) (3 1) (0 4))))
+       (variable (make-sparse 'x '((5 2) (3 1) (0 4))))
        )
 
 (test* "term-list of (sparse x (5 2) (3 1) (0 4))"
        '((5 2) (3 1) (0 4))
-       (term-list (make-from-term-list 'x '((5 2) (3 1) (0 4))))
+       (term-list (make-sparse 'x '((5 2) (3 1) (0 4))))
        )
 
 (test* "coeff-list of (sparse x (5 2) (3 1) (0 4))"
        '(2 0 1 0 0 4)
-       (coeff-list (make-from-term-list 'x '((5 2) (3 1) (0 4))))
+       (coeff-list (make-sparse 'x '((5 2) (3 1) (0 4))))
+       )
+
+(test* "negate of (sparse x (5 2) (3 1) (0 4))"
+       (make-sparse 'x '((5 -2) (3 -1) (0 -4)))
+       (negate (make-sparse 'x '((5 2) (3 1) (0 4))))
+       )
+
+(test* "=zero? of (sparse x (5 2) (3 1) (0 4))"
+       #f
+       (=zero? (make-sparse 'x '((5 2) (3 1) (0 4))))
+       )
+
+(test* "=zero? of (sparse x (5 0) (3 0) (0 0))"
+       #t
+       (=zero? (make-sparse 'x '((5 0) (3 0) (0 0))))
+       )
+
+(test* "=zero? of (sparse x)"
+       #t
+       (=zero? (make-sparse 'x '()))
        )
 
 ;; dense type
 
 (test* "(make-from-coeffs 'x '(2 0 1 0 0 4))"
        '(dense x 2 0 1 0 0 4)
-       (make-from-coeff-list 'x '(2 0 1 0 0 4))
+       (make-dense 'x '(2 0 1 0 0 4))
        )
 
 (test* "variable of (dense x 2 0 1 0 0 4)"
        'x
-       (variable (make-from-coeff-list 'x '(2 0 1 0 0 4)))
+       (variable (make-dense 'x '(2 0 1 0 0 4)))
        )
 
 (test* "term-list of (dense x 2 0 1 0 0 4)"
        '((5 2) (3 1) (0 4))
-       (term-list (make-from-coeff-list 'x '(2 0 1 0 0 4)))
+       (term-list (make-dense 'x '(2 0 1 0 0 4)))
        )
 
 (test* "coeff-list of (dense x 2 0 1 0 0 4)"
        '(2 0 1 0 0 4)
-       (coeff-list (make-from-coeff-list 'x '(2 0 1 0 0 4)))
+       (coeff-list (make-dense 'x '(2 0 1 0 0 4)))
+       )
+
+(test* "negate of (dense x 2 0 1 0 0 4)"
+       (make-dense 'x '(-2 0 -1 0 0 -4))
+       (negate (make-dense 'x '(2 0 1 0 0 4)))
+       )
+
+(test* "=zero? of (dense x 2 0 1 0 0 4)"
+       #f
+       (=zero? (make-dense 'x '(2 0 1 0 0 4)))
+       )
+
+(test* "=zero? of (dense x 0 0 0 0 0)"
+       #t
+       (=zero? (make-dense 'x '(0 0 0 0 0)))
+       )
+
+(test* "=zero? of (dense x)"
+       #t
+       (=zero? (make-dense 'x '()))
        )
