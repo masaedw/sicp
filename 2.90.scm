@@ -109,3 +109,46 @@
        #t
        (=zero? (make-dense 'x '()))
        )
+
+;; polynomial package
+
+(test* "(add (dense x 1 2 3 4 5) (sparse x (4 1) (2 3)))"
+       (make-from-coeff-list 'x '(2 2 6 4 5))
+       (add (make-from-coeff-list 'x '(1 2 3 4 5))
+            (make-from-term-list 'x '((4 1) (2 3))))
+       equ?)
+
+(test* "(sub (dense x 1 2 3 4 5) (sparse x (4 1) (2 3)))"
+       (make-from-coeff-list 'x '(0 2 0 4 5))
+       (sub (make-from-coeff-list 'x '(1 2 3 4 5))
+            (make-from-term-list 'x '((4 1) (2 3))))
+       equ?)
+
+(test* "(mul (dense x 1 2 3 4 5) (sparse x (4 1) (2 3)))"
+       (make-from-term-list 'x '((8 1) (7 2) (6 6) (5 10) (4 14) (3 12) (2 15)))
+       (mul (make-from-coeff-list 'x '(1 2 3 4 5))
+            (make-from-term-list 'x '((4 1) (2 3))))
+       equ?)
+
+(test* "(negate (dense x 1 2 3 4 5))"
+       (make-from-coeff-list 'x '(-1 -2 -3 -4 -5))
+       (negate (make-from-coeff-list 'x '(1 2 3 4 5)))
+       equ?)
+
+(test* "(negate (sparse x (4 1) (2 3)))"
+       (make-from-term-list 'x '((4 -1) (2 -3)))
+       (negate (make-from-term-list 'x '((4 1) (2 3))))
+       equ?)
+
+(test* "(equ? (sparse x (0 1)) (dense x 1))"
+       (make-from-term-list 'x '((0 1)))
+       (make-from-coeff-list 'x '(1))
+       equ?)
+
+(test* "(=zero? (sparse x (0 0)))"
+       #t
+       (=zero? (make-from-term-list 'x '((0 0)))))
+
+(test* "(=zero? (dense x 0))"
+       #t
+       (=zero? (make-from-coeff-list 'x '(0))))
