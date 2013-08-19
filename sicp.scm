@@ -1,7 +1,7 @@
-(define-module SICP
+(define-module sicp
   (export-all))
 
-(select-module SICP)
+(select-module sicp)
 
 (define (p . z)
   (map print z))
@@ -100,5 +100,3 @@
 
 (define (edge2-frame frame)
   (caddr frame))
-
-(provide "SICP")
