@@ -32,7 +32,7 @@
   (prime-orig? 1019)
   (prime-orig? 10007)
   (prime-orig? 10009)
-  (prime-orig? 100037)
+  (prime-orig? 10037)
   (prime-orig? 100003)
   (prime-orig? 100019)
   (prime-orig? 100043)
@@ -46,7 +46,7 @@
   (prime? 1019)
   (prime? 10007)
   (prime? 10009)
-  (prime? 100037)
+  (prime? 10037)
   (prime? 100003)
   (prime? 100019)
   (prime? 100043)
@@ -58,7 +58,7 @@
   (time (dotimes (_ 1000) (prime-test-orig)))
   ;; user 1.410
   (time (dotimes (_ 1000) (prime-test)))
-  ;; user 0.840
+  ;; user 0.860
   )
 
 ;; だいぶ早くなったけど二倍速くはなっていない。
