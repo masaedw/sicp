@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 
 (add-load-path ".")
-(use SICP)
+(use sicp)
 
 (define (make-point x y) (list x y))
 (define (x-of p) (car p))
