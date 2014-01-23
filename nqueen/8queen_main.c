@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <SDL.h>
 #include "8queen.h"
 
 int main(int argc, char** argv)
