@@ -1,5 +1,5 @@
 (add-load-path ".")
-(use SICP)
+(use sicp)
 
 (define (unique-pairs n)
   (flatmap (lambda (i)
@@ -7,18 +7,18 @@
                   (enumerate-interval 1 (- i 1))))
            (enumerate-interval 1 n)))
 
-(define (unique-ternaries n)
+(define (unique-triples n)
   (flatmap (lambda (i)
              (map (lambda (j) (cons i j))
                   (unique-pairs (- i 1))))
            (enumerate-interval 2 n)))
 
-(define (=sum? list n)
-  (= (accumulate + 0 list) n))
+(define (=sum? ns n)
+  (= (accumulate + 0 ns) n))
 
-(define (sum-confined-ternaries s n)
-  (filter (lambda (list) (=sum? list s))
-          (unique-ternaries n)))
+(define (sum-is-s-triples s n)
+  (filter (lambda (ns) (=sum? ns s))
+          (unique-triples n)))
 
 (define (main args)
-  (p (sum-confined-ternaries 15 20)))
+  (p (sum-is-s-triples 10 20)))
