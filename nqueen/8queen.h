@@ -6,6 +6,6 @@ typedef struct EightQueen EightQueen;
 
 EightQueen* eight_queen_Initialize(void);
 void eight_queen_MainLoop(EightQueen*);
-void eight_queen_Finalize(EightQueen*);
+void eight_queen_Free(EightQueen*);
 
 #endif
